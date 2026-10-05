@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Bonusmaxxing">
-  <rect width="32" height="32" rx="7" fill="#2d6a45"/>
-  <text x="16" y="22" text-anchor="middle" font-family="Georgia, serif" font-size="16" font-weight="700" fill="#f0c24b">B</text>
+  <rect width="32" height="32" fill="#2d6a45"/>
+  <text x="15.2" y="22" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#fcfdfb">B</text>
+  <text x="24.2" y="22.4" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" font-style="italic" fill="#fcfdfb">M</text>
 </svg>
