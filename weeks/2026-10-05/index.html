@@ -1773,7 +1773,7 @@
     <div class="hero-actions">
       <form
         class="subscribe"
-        action="https://buttondown.com/api/emails/embed-subscribe/bcworks"
+        action="https://buttondown.com/api/emails/embed-subscribe/Bonusmaxxing"
         method="post"
         accept-charset="utf-8"
         data-newsletter-form
@@ -2400,7 +2400,7 @@ AH Courgette · 2 stuks · 2 pakken (per stuk)" data-label="Kopieer lijst" data-
       </p>
       <form
         class="subscribe"
-        action="https://buttondown.com/api/emails/embed-subscribe/bcworks"
+        action="https://buttondown.com/api/emails/embed-subscribe/Bonusmaxxing"
         method="post"
         accept-charset="utf-8"
         data-newsletter-form
@@ -2645,13 +2645,13 @@ AH Courgette · 2 stuks · 2 pakken (per stuk)" data-label="Kopieer lijst" data-
       var forms = document.querySelectorAll("[data-newsletter-form]");
       if (!forms.length) return;
 
-      var frameName = "buttondown-frame";
-      var frame = document.querySelector('iframe[name="' + frameName + '"]');
-      var activeForm = null;
+      // Full-page POST to Buttondown (CAPTCHA/Turnstile cannot run in a hidden
+      // iframe: X-Frame-Options DENY). Success returns via ?subscribed=1.
       var overlay = document.querySelector("[data-sub-overlay]");
       var sentinel = document.querySelector("[data-sub-sentinel]");
       var overlayKey = "bm_sub_overlay";
       var fromEmailKey = "bm_from_email";
+      var sourceKey = "bm_newsletter_source";
       function cookieGet(name) {
         var parts = ("; " + document.cookie).split("; " + name + "=");
         if (parts.length < 2) return "";
@@ -2663,6 +2663,20 @@ AH Courgette · 2 stuks · 2 pakken (per stuk)" data-label="Kopieer lijst" data-
           "; Max-Age=" + Math.round(days * 86400) +
           "; Path=/; SameSite=Lax";
       }
+      function setStatus(form, message) {
+        var status = form.parentElement.querySelector("[data-newsletter-status]");
+        if (!status) return;
+        status.hidden = false;
+        status.textContent = message;
+      }
+      function markSubscribed(source) {
+        forms.forEach(function (form) {
+          form.classList.add("is-done");
+          setStatus(form, "Check je inbox om je aanmelding te bevestigen. Niks gezien? Kijk even in spam.");
+        });
+        cookieSet(overlayKey, "1", 365);
+        track("newsletter_submit", { source: source || "hero" });
+      }
       var params = new URLSearchParams(window.location.search);
       var fromEmail =
         params.get("utm_medium") === "email" ||
@@ -2671,6 +2685,20 @@ AH Courgette · 2 stuks · 2 pakken (per stuk)" data-label="Kopieer lijst" data-
       if (fromEmail) {
         cookieSet(fromEmailKey, "1", 180);
         track("email_visit");
+      }
+      if (params.get("subscribed") === "1") {
+        var source = "hero";
+        try {
+          source = sessionStorage.getItem(sourceKey) || "hero";
+          sessionStorage.removeItem(sourceKey);
+        } catch (err) {}
+        markSubscribed(source);
+        params.delete("subscribed");
+        var clean =
+          window.location.pathname +
+          (params.toString() ? "?" + params.toString() : "") +
+          window.location.hash;
+        window.history.replaceState({}, "", clean);
       }
       var skipOverlay =
         fromEmail ||
@@ -2718,42 +2746,14 @@ AH Courgette · 2 stuks · 2 pakken (per stuk)" data-label="Kopieer lijst" data-
         });
       }
 
-      if (!frame) {
-        frame = document.createElement("iframe");
-        frame.name = frameName;
-        frame.title = "Nieuwsbrief aanmelding";
-        frame.hidden = true;
-        document.body.appendChild(frame);
-      }
-
-      function setStatus(form, message) {
-        var status = form.parentElement.querySelector("[data-newsletter-status]");
-        if (!status) return;
-        status.hidden = false;
-        status.textContent = message;
-      }
-
-      frame.addEventListener("load", function () {
-        if (!activeForm) return;
-        activeForm.classList.add("is-done");
-        setStatus(
-          activeForm,
-          "Check je inbox om je aanmelding te bevestigen. Niks gezien? Kijk even in spam."
-        );
-        track("newsletter_submit", {
-          source: activeForm.getAttribute("data-source") || "hero",
-        });
-        cookieSet(overlayKey, "1", 365);
-        var dialog = activeForm.closest("[data-sub-overlay]");
-        if (dialog && dialog.open) dialog.close("subscribed");
-        activeForm.reset();
-        activeForm = null;
-      });
-
       forms.forEach(function (form) {
         form.addEventListener("submit", function () {
-          activeForm = form;
-          form.target = frameName;
+          try {
+            sessionStorage.setItem(
+              sourceKey,
+              form.getAttribute("data-source") || "hero"
+            );
+          } catch (err) {}
           setStatus(form, "Bezig met aanmelden…");
         });
       });
